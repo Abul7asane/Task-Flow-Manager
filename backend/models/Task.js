@@ -31,6 +31,12 @@
  ref: 'Project',
  required: [true, 'La tache doit appartenir a un projet']
  },
+ // NOUVEAU : membre assigne a cette tache
+assignedTo: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'User',
+  default: null
+},
   // Date limite optionnelle
  dateLimite: {
  type: Date,
