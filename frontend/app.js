@@ -1,3 +1,4 @@
+// Application TaskFlow - Frontend - Authentification
 // Adresse du serveur backend
 const API = 'http://localhost:3000/api/auth';
 
