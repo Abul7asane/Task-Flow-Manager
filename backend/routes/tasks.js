@@ -106,6 +106,37 @@ res.json(tache);
 res.status(500).json({ message: 'Erreur serveur', error: error.message });
 }
 });
+// PATCH /api/tasks/:id/assign
+router.patch('/:id/assign', async (req, res) => {
+  try {
+    const { assignedTo } = req.body;
+    const tache = await Task.findByIdAndUpdate(
+      req.params.id,
+      { assignedTo },
+      { new: true }
+    ).populate('assignedTo', 'nom prenom email');
+    if (!tache) return res.status(404).json({ message: 'Tache non trouvee' });
+    res.json(tache);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+});
+
+// GET /api/tasks/mes-taches
+router.get('/mes-taches', async (req, res) => {
+  try {
+    const taches = await Task.find({
+      assignedTo: req.userId,
+    })
+    .populate('projet', 'titre')
+    .populate('assignedTo', 'nom prenom email');
+    res.json(taches);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+});
+
+
     module.exports = router;
 
   
