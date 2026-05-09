@@ -29,7 +29,7 @@ userSchema.pre('save', async function(next) {
   if (!this.isModified('motDePasse')) return next();
   // bcrypt transforme "1234" en "$2b$10$xyz..."
   this.motDePasse = await bcrypt.hash(this.motDePasse, 10);
-  next();
+  //next();
 });
 
 module.exports = mongoose.model('User', userSchema);
