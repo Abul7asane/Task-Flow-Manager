@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Inscription - TaskFlow</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 400px; margin: 50px auto; padding: 20px; }
+    input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #45a049; }
+    .message { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .erreur { background: #ffebee; color: #c62828; }
+    .succes { background: #e8f5e9; color: #2e7d32; }
+    a { color: #4CAF50; }
+  </style>
+</head>
+<body>
+  <h2>Créer un compte</h2>
+
+  <input type="text"     id="nom"        placeholder="Nom" />
+  <input type="text"     id="prenom"     placeholder="Prénom" />
+  <input type="email"    id="email"      placeholder="Email" />
+  <input type="password" id="motDePasse" placeholder="Mot de passe" />
+
+  <button onclick="sInscrire()">S'inscrire</button>
+
+  <div id="message" class="message" style="display:none"></div>
+
+  <p>Déjà un compte ? <a href="index.html">Se connecter</a></p>
+
+  <script src="app.js"></script>
+</body>
+</html>
