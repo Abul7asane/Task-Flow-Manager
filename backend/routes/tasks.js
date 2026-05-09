@@ -34,18 +34,22 @@ if (!titre || !projet) {
  }
  });
   // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
- // GET /api/tasks/:id
- // Recuperer une tache par son id
+ // GET /api/projects/:id/tasks
+// Recuperer toutes les taches d'un projet AVEC les infos du membre assigne
  // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
- router.get('/:id', async (req, res) => {
- try {
- const tache = await Task.findById(req.params.id);
- if (!tache) return res.status(404).json({ message: 'Tache non trouvee' });
- res.json(tache);
- } catch (error) {
- res.status(500).json({ message: 'Erreur serveur', error: error.message });
- }
- });
+ 
+router.get('/projects/:id/tasks', async (req, res) => {
+try {
+  const taches = await Task.find({ projet: req.params.id })
+    .populate(
+      'assignedTo',
+      'nom prenom email'
+    );
+  res.json(taches);
+} catch (error) {
+  res.status(500).json({ message: 'Erreur serveur', error: error.message });
+}
+});
   // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
  // PUT /api/tasks/:id
  // Modifier une tache
