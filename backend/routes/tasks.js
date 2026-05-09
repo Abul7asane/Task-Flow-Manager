@@ -76,6 +76,32 @@ if (!titre || !projet) {
  res.status(500).json({ message: 'Erreur serveur', error: error.message });
  }
  });
+ // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+// PATCH /api/tasks/:id/status
+// Mettre a jour UNIQUEMENT le statut d'une tache
+// Exemple : { "statut": "en cours" }
+// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+router.patch('/:id/status', async (req, res) => {
+try {
+const { statut } = req.body;
+// Verifier que le statut est valide
+const statutsValides = ['a faire', 'en cours', 'termine'];
+if (!statutsValides.includes(statut)) {
+return res.status(400).json({
+message: 'Statut invalide. Valeurs acceptees : a faire, en cours, termine'
+});
+}
+const tache = await Task.findByIdAndUpdate(
+req.params.id,
+{ statut }, // mettre a jour SEULEMENT le statut
+{ new: true }
+);
+if (!tache) return res.status(404).json({ message: 'Tache non trouvee' });
+res.json(tache);
+} catch (error) {
+res.status(500).json({ message: 'Erreur serveur', error: error.message });
+}
+});
     module.exports = router;
-    
+
   
