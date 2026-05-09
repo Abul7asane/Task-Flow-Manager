@@ -135,7 +135,21 @@ router.get('/mes-taches', async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 });
+// GET /api/projects/:id/mes-taches
+router.get('/projects/:id/mes-taches', async (req, res) => {
+  try {
+    const taches = await Task.find({
+      projet:     req.params.id,
+      assignedTo: req.userId
+    })
+    .populate('assignedTo', 'nom prenom email')
+    .sort({ priorite: -1 });
 
+    res.json(taches);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+});
 
     module.exports = router;
 
