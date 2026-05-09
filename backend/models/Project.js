@@ -20,7 +20,7 @@ const projectSchema = new mongoose.Schema({
   // Statut — seulement 3 valeurs possibles (enum)
   statut: {
     type: String,
-    enum: ['actif', 'en pause', 'archive'],
+    enum: ['actif', 'en pause', 'archivé'],
     default: 'actif'
   },
   // Createur — reference vers la collection User
