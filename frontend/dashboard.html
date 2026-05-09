@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Tableau de bord - TaskFlow</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #F0F2F5;
+        }
+
+        .nav {
+            background: #1E3A5F;
+            color: white;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .contenu {
+            padding: 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .titre {
+            font-size: 24px;
+            color: #1E3A5F;
+            margin-bottom: 24px;
+        }
+
+        .grille {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .carte {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .carte .nombre {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1E3A5F;
+        }
+
+        .carte .label {
+            font-size: 13px;
+            color: #666;
+            margin-top: 6px;
+        }
+
+        .retard {
+            color: #C62828 !important;
+        }
+
+        .taches-liste {
+            margin-top: 32px;
+        }
+
+        .tache-item {
+            background: white;
+            padding: 14px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .haute {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+
+        .moyenne {
+            background: #FFF3E0;
+            color: #E65100;
+        }
+
+        .basse {
+            background: #E8F5E9;
+            color: #1B5E20;
+        }
+
+        button {
+            background: #EF5350;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nav">
+        <h1>TaskFlow</h1>
+        <button onclick="seDeconnecter()">Se deconnecter</button>
+    </div>
+    <div class="contenu">
+        <h2 class="titre" id="bienvenue">Chargement...</h2>
+        <div class="grille">
+            <div class="carte">
+                <div class="nombre" id="projetsActifs">-</div>
+                <div class="label">Projets actifs</div>
+            </div>
+            <div class="carte">
+                <div class="nombre" id="tachesAssignees">-</div>
+                <div class="label">Taches assignees</div>
+            </div>
+            <div class="carte">
+                <div class="nombre" id="tachesTerminees">-</div>
+                <div class="label">Taches terminees</div>
+            </div>
+            <div class="carte">
+                <div class="nombre retard" id="tachesEnRetard">-</div>
+                <div class="label">Taches en retard</div>
+            </div>
+        </div>
+        <div class="taches-liste">
+            <h3 style="margin-bottom:12px; color:#1E3A5F">Taches en cours</h3>
+            <div id="listeTaches">Chargement...</div>
+        </div>
+    </div>
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!token) window.location.href = 'index.html';
+        document.getElementById('bienvenue').textContent =
+            'Bonjour, ' + user.prenom + ' ' + user.nom + ' !';
+        // UN SEUL appel Axios pour toutes les donnees
+        axios.get('http://localhost:3000/api/dashboard', {
+            headers: { Authorization: 'Bearer ' + token }
+        })
+            .then(function (reponse) {
+                const data = reponse.data;
+                document.getElementById('projetsActifs').textContent = data.projetsActifs;
+                document.getElementById('tachesAssignees').textContent = data.tachesAssignees;
+                document.getElementById('tachesTerminees').textContent = data.tachesTerminees;
+                document.getElementById('tachesEnRetard').textContent = data.tachesEnRetard;
+                const liste = document.getElementById('listeTaches');
+                if (data.tachesEnCours.length === 0) {
+                    liste.innerHTML = '<p style="color:#666">Aucune tache en cours.</p>';
+                    return;
+                }
+                liste.innerHTML = data.tachesEnCours.map(function (tache) {
+                    return '<div class="tache-item">' +
+                        '<div><strong>' + tache.titre + '</strong>' +
+                        '<span style="color:#666;font-size:12px;margin-left:8px">' +
+                        (tache.projet ? tache.projet.titre : '') + '</span></div>' +
+                        '<span class="badge ' + tache.priorite + '">' + tache.priorite + '</span>' +
+                        '</div>';
+                }).join('');
+            })
+            .catch(function () {
+                document.getElementById('listeTaches').innerHTML =
+                    '<p style="color:red">Erreur de chargement.</p>';
+            });
+        function seDeconnecter() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+
+</html>
