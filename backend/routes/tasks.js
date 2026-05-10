@@ -8,14 +8,44 @@ router.use(authMiddleware);
 
 // GET /api/projects/:id/tasks
 // Recuperer toutes les taches d'un projet AVEC les infos du membre assigne
+// Avec filtrage conditionnel, recherche $regex et pagination
 router.get('/projects/:id/tasks', async (req, res) => {
   try {
-    const taches = await Task.find({ projet: req.params.id })
-      .populate(
-        'assignedTo',
-        'nom prenom email'
-      );
-    res.json(taches);
+    // Recuperer les query params depuis l'URL
+    // Exemple : /api/projects/123/tasks?statut=en cours&priorite=haute&page=1&limit=5
+    const { statut, priorite, assignedTo, recherche, page, limit } = req.query;
+    // Construire le filtre de base : appartient a ce projet
+    const filtre = { projet: req.params.id };
+    // Conditions ajoutees SEULEMENT si le parametre est present
+    if (statut) filtre.statut = statut;
+    if (priorite) filtre.priorite = priorite;
+    if (assignedTo) filtre.assignedTo = assignedTo;
+    // Recherche $regex avec option i (insensible a la casse)
+    // Cherche dans titre OU description
+    if (recherche) {
+      filtre.$or = [
+        { titre: { $regex: recherche, $options: 'i' } },
+        { description: { $regex: recherche, $options: 'i' } }
+      ];
+    }
+    // Pagination
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+    // Executer la requete
+    const taches = await Task.find(filtre)
+      .populate('assignedTo', 'nom prenom email')
+      .skip(skip)
+      .limit(limitNum);
+    // Compter le total
+    const total = await Task.countDocuments(filtre);
+    // Reponse JSON avec data + infos pagination
+    res.json({
+      data: taches,
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum)
+    });
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
@@ -135,11 +165,11 @@ router.get('/mes-taches', async (req, res) => {
 router.get('/projects/:id/mes-taches', async (req, res) => {
   try {
     const taches = await Task.find({
-      projet:     req.params.id,
+      projet: req.params.id,
       assignedTo: req.userId
     })
-    .populate('assignedTo', 'nom prenom email')
-    .sort({ priorite: -1 });
+      .populate('assignedTo', 'nom prenom email')
+      .sort({ priorite: -1 });
     res.json(taches);
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
