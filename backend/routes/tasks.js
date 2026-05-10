@@ -85,10 +85,10 @@ router.patch('/:id/status', async (req, res) => {
 try {
 const { statut } = req.body;
 // Verifier que le statut est valide
-const statutsValides = ['a faire', 'en cours', 'termine'];
+const statutsValides = ['à faire', 'en cours', 'terminé'];
 if (!statutsValides.includes(statut)) {
 return res.status(400).json({
-message: 'Statut invalide. Valeurs acceptees : a faire, en cours, termine'
+message: 'Statut invalide. Valeurs acceptees : à faire, en cours, terminé'
 });
 }
 const tache = await Task.findByIdAndUpdate(
