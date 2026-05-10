@@ -142,6 +142,17 @@
       border-radius: 6px;
       cursor: pointer;
     }
+    .formulaire {
+background: white; padding: 24px; border-radius: 10px;
+margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.champ { margin-bottom: 14px; }
+.champ label { display: block; font-size: 13px; font-weight: 600;
+color: #333; margin-bottom: 6px; }
+.champ input, .champ textarea, .champ select {
+width: 100%; padding: 10px 14px; border: 1.5px solid #DDD;
+border-radius: 8px; font-size: 14px;
+}
   </style>
 </head>
 
@@ -171,6 +182,42 @@
       </select>
       <button class="btn-filtrer" onclick="chargerTaches(1)">Filtrer</button>
     </div>
+    <!-- FORMULAIRE CREATION TACHE -->
+<div class="formulaire">
+<h3 style="color:#1E3A5F; margin-bottom:16px">Nouvelle tache</h3>
+<div class="champ">
+<label>Titre *</label>
+<input type="text" id="titreTache" placeholder="Titre de la tache" />
+</div>
+<div class="champ">
+<label>Description</label>
+<textarea id="descriptionTache" placeholder="Description..." rows="3"></textarea>
+</div>
+<div class="champ">
+<label>Priorite *</label>
+<select id="prioriteTache">
+<option value="moyenne">Moyenne</option>
+<option value="haute">Haute</option>
+<option value="basse">Basse</option>
+</select>
+</div>
+<div class="champ">
+<label>Date limite</label>
+<input type="date" id="dateLimiteTache" />
+</div>
+<div style="display:flex; gap:10px; margin-top:16px">
+<button class="btn-filtrer" onclick="soumettreFormulaire()">
+Creer la tache
+</button>
+<button onclick="reinitialiserFormulaire()"
+style="padding:10px 20px; background:#666; color:white;
+border:none; border-radius:8px; cursor:pointer">
+Vider le formulaire
+</button>
+</div>
+<div id="msgFormulaire" style="margin-top:12px; display:none;
+padding:10px; border-radius:6px; font-size:14px;"></div>
+</div>
     <p class="info-total" id="infoTotal"></p>
     <div id="listeTaches">Chargement...</div>
     <div class="pagination" id="pagination"></div>
@@ -225,6 +272,81 @@
         div.appendChild(btn);
       }
     }
+     // SAUVEGARDE AUTOMATIQUE DES BROUILLONS
+ // Cle unique par projet pour ne pas melanger les donnees
+ const cleBrouillon = 'brouillon_tache_' + projetId;
+  // Sauvegarder a chaque modification
+ function sauvegarderBrouillon() {
+ const brouillon = {
+ titre: document.getElementById('titreTache').value,
+ description: document.getElementById('descriptionTache').value,
+ priorite: document.getElementById('prioriteTache').value,
+ dateLimite: document.getElementById('dateLimiteTache').value,
+ };
+ localStorage.setItem(cleBrouillon, JSON.stringify(brouillon));
+ }
+  // Attacher l'evenement input a chaque champ
+ document.getElementById('titreTache').addEventListener('input', sauvegarderBrouillon);
+ document.getElementById('descriptionTache').addEventListener('input', sauvegarderBrouillon);
+ document.getElementById('prioriteTache').addEventListener('change', sauvegarderBrouillon);
+ document.getElementById('dateLimiteTache').addEventListener('change', sauvegarderBrouillon);
+  // Verifier brouillon au chargement
+ function verifierBrouillon() {
+ const brouillonSauvegarde = localStorage.getItem(cleBrouillon);
+ if (brouillonSauvegarde) {
+ const choix = confirm('Un brouillon existe. Voulez-vous le restaurer ?');
+ if (choix) {
+ const brouillon = JSON.parse(brouillonSauvegarde);
+ document.getElementById('titreTache').value = brouillon.titre || '';
+ document.getElementById('descriptionTache').value = brouillon.description || '';
+ document.getElementById('prioriteTache').value = brouillon.priorite || 'moyenne';
+ document.getElementById('dateLimiteTache').value = brouillon.dateLimite || '';
+ } else {
+ localStorage.removeItem(cleBrouillon);
+ }
+ }
+ }
+  // Soumettre le formulaire
+ async function soumettreFormulaire() {
+ const titre = document.getElementById('titreTache').value.trim();
+ const description = document.getElementById('descriptionTache').value;
+ const priorite = document.getElementById('prioriteTache').value;
+ const dateLimite = document.getElementById('dateLimiteTache').value;
+  if (!titre) {
+ afficherMsgFormulaire('Le titre est obligatoire', 'erreur');
+ return;
+ }
+  try {
+ await axios.post(API + '/tasks', {
+ titre, description, priorite, dateLimite,
+ projet: projetId
+ }, { headers: { Authorization: 'Bearer ' + token } });
+  // Supprimer le brouillon apres soumission reussie
+ localStorage.removeItem(cleBrouillon);
+  afficherMsgFormulaire('Tache creee avec succes !', 'succes');
+ reinitialiserFormulaire();
+ chargerTaches(1);
+  } catch (error) {
+ afficherMsgFormulaire('Erreur lors de la creation', 'erreur');
+ }
+ }
+  function reinitialiserFormulaire() {
+ document.getElementById('titreTache').value = '';
+ document.getElementById('descriptionTache').value = '';
+ document.getElementById('prioriteTache').value = 'moyenne';
+ document.getElementById('dateLimiteTache').value = '';
+ localStorage.removeItem(cleBrouillon);
+ }
+ 
+function afficherMsgFormulaire(texte, type) {
+const div = document.getElementById('msgFormulaire');
+div.textContent = texte;
+div.style.display = 'block';
+div.style.background = type === 'succes' ? '#E8F5E9' : '#FFEBEE';
+div.style.color = type === 'succes' ? '#1B5E20' : '#C62828';
+verifierBrouillon();
+}
+// Verifier brouillon au chargement
     document.getElementById('recherche').addEventListener('input', function () {
       chargerTaches(1);
     });
