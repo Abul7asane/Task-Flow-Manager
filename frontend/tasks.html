@@ -272,6 +272,81 @@ padding:10px; border-radius:6px; font-size:14px;"></div>
         div.appendChild(btn);
       }
     }
+     // SAUVEGARDE AUTOMATIQUE DES BROUILLONS
+ // Cle unique par projet pour ne pas melanger les donnees
+ const cleBrouillon = 'brouillon_tache_' + projetId;
+  // Sauvegarder a chaque modification
+ function sauvegarderBrouillon() {
+ const brouillon = {
+ titre: document.getElementById('titreTache').value,
+ description: document.getElementById('descriptionTache').value,
+ priorite: document.getElementById('prioriteTache').value,
+ dateLimite: document.getElementById('dateLimiteTache').value,
+ };
+ localStorage.setItem(cleBrouillon, JSON.stringify(brouillon));
+ }
+  // Attacher l'evenement input a chaque champ
+ document.getElementById('titreTache').addEventListener('input', sauvegarderBrouillon);
+ document.getElementById('descriptionTache').addEventListener('input', sauvegarderBrouillon);
+ document.getElementById('prioriteTache').addEventListener('change', sauvegarderBrouillon);
+ document.getElementById('dateLimiteTache').addEventListener('change', sauvegarderBrouillon);
+  // Verifier brouillon au chargement
+ function verifierBrouillon() {
+ const brouillonSauvegarde = localStorage.getItem(cleBrouillon);
+ if (brouillonSauvegarde) {
+ const choix = confirm('Un brouillon existe. Voulez-vous le restaurer ?');
+ if (choix) {
+ const brouillon = JSON.parse(brouillonSauvegarde);
+ document.getElementById('titreTache').value = brouillon.titre || '';
+ document.getElementById('descriptionTache').value = brouillon.description || '';
+ document.getElementById('prioriteTache').value = brouillon.priorite || 'moyenne';
+ document.getElementById('dateLimiteTache').value = brouillon.dateLimite || '';
+ } else {
+ localStorage.removeItem(cleBrouillon);
+ }
+ }
+ }
+  // Soumettre le formulaire
+ async function soumettreFormulaire() {
+ const titre = document.getElementById('titreTache').value.trim();
+ const description = document.getElementById('descriptionTache').value;
+ const priorite = document.getElementById('prioriteTache').value;
+ const dateLimite = document.getElementById('dateLimiteTache').value;
+  if (!titre) {
+ afficherMsgFormulaire('Le titre est obligatoire', 'erreur');
+ return;
+ }
+  try {
+ await axios.post(API + '/tasks', {
+ titre, description, priorite, dateLimite,
+ projet: projetId
+ }, { headers: { Authorization: 'Bearer ' + token } });
+  // Supprimer le brouillon apres soumission reussie
+ localStorage.removeItem(cleBrouillon);
+  afficherMsgFormulaire('Tache creee avec succes !', 'succes');
+ reinitialiserFormulaire();
+ chargerTaches(1);
+  } catch (error) {
+ afficherMsgFormulaire('Erreur lors de la creation', 'erreur');
+ }
+ }
+  function reinitialiserFormulaire() {
+ document.getElementById('titreTache').value = '';
+ document.getElementById('descriptionTache').value = '';
+ document.getElementById('prioriteTache').value = 'moyenne';
+ document.getElementById('dateLimiteTache').value = '';
+ localStorage.removeItem(cleBrouillon);
+ }
+ 
+function afficherMsgFormulaire(texte, type) {
+const div = document.getElementById('msgFormulaire');
+div.textContent = texte;
+div.style.display = 'block';
+div.style.background = type === 'succes' ? '#E8F5E9' : '#FFEBEE';
+div.style.color = type === 'succes' ? '#1B5E20' : '#C62828';
+verifierBrouillon();
+}
+// Verifier brouillon au chargement
     document.getElementById('recherche').addEventListener('input', function () {
       chargerTaches(1);
     });
