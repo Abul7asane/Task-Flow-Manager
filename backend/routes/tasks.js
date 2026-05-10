@@ -80,54 +80,13 @@ router.delete('/:id', async (req, res) => {
 // PATCH /api/tasks/:id/status
 // Mettre a jour UNIQUEMENT le statut d'une tache
 router.patch('/:id/status', async (req, res) => {
-  try {
-    const { statut } = req.body;
-    const statutsValides = ['a faire', 'en cours', 'termine'];
-    if (!statutsValides.includes(statut)) {
-      return res.status(400).json({
-        message: 'Statut invalide. Valeurs acceptees : a faire, en cours, termine'
-      });
-    }
-    const tache = await Task.findByIdAndUpdate(
-      req.params.id,
-      { statut },
-      { new: true }
-    );
-    if (!tache) return res.status(404).json({ message: 'Tache non trouvee' });
-    res.json(tache);
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
-  }
-});
-
-// PATCH /api/tasks/:id/assign
-// Assigner une tache a un membre
-router.patch('/:id/assign', async (req, res) => {
-  try {
-    const { assignedTo } = req.body;
-    const tache = await Task.findByIdAndUpdate(
-      req.params.id,
-      { assignedTo },
-      { new: true }
-    ).populate('assignedTo', 'nom prenom email');
-    if (!tache) return res.status(404).json({ message: 'Tache non trouvee' });
-    res.json(tache);
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
-  }
-});
-
-// GET /api/tasks/mes-taches
-// Taches assignees au membre connecte
-router.get('/mes-taches', async (req, res) => {
-  try {
-    const taches = await Task.find({ assignedTo: req.userId })
-      .populate('projet', 'titre')
-      .populate('assignedTo', 'nom prenom email');
-    res.json(taches);
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
-  }
+try {
+const { statut } = req.body;
+// Verifier que le statut est valide
+const statutsValides = ['à faire', 'en cours', 'terminé'];
+if (!statutsValides.includes(statut)) {
+return res.status(400).json({
+message: 'Statut invalide. Valeurs acceptees : à faire, en cours, terminé'
 });
 
 // GET /api/projects/:id/mes-taches
@@ -146,4 +105,4 @@ router.get('/projects/:id/mes-taches', async (req, res) => {
   }
 });
 
-module.exports = router;
+  

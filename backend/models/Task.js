@@ -21,9 +21,9 @@
   // Statut — 3 valeurs possibles uniquement (enum)
  statut: {
  type: String,
- enum: ['a faire', 'en cours', 'termine'],
+ enum: ['à faire', 'en cours', 'terminé'],
  required: [true, 'Le statut est obligatoire'],
- default: 'a faire'
+ default: 'à faire'
  },
   // Reference vers le projet parent (obligatoire)
  projet: {
