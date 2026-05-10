@@ -1,8 +1,8 @@
 # Task-Flow-Manager
-Projet de fin de module — Développement d'une application web [ fullstack ]  Module : JavaScript · Express · MongoDB · Docker · GitHub
+Projet de fin de module — Développement d'une application web [FULLSTACK]  Module : JavaScript · Express · MongoDB · Docker · GitHub
 
 # Plan Complet TaskFlow — De A à Z
-## Projet : Authentification utilisateur (Fonctionnalité 1)
+
 ### 2 personnes — Durée recommandée : 5 à 7 jours
 
 ---
