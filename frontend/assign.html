@@ -1,0 +1,84 @@
+<!-- Assignation des taches - Fonctionnalite 4 -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Assigner une tache - TaskFlow</title>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #F0F2F5; }
+.carte {
+background: white; padding: 32px; border-radius: 12px;
+max-width: 500px; margin: 60px auto;
+box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+h2 { color: #1E3A5F; margin-bottom: 24px; }
+label { display: block; font-size: 13px; font-weight: 600;
+color: #333; margin-bottom: 6px; margin-top: 16px; }
+select { width: 100%; padding: 12px; border: 1.5px solid #DDD;
+border-radius: 8px; font-size: 15px; }
+button { width: 100%; padding: 14px; background: #1E3A5F;
+color: white; border: none; border-radius: 8px;
+font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 24px; }
+button:hover { background: #006064; }
+.message { padding: 12px; margin-top: 16px; border-radius: 8px;
+font-size: 14px; display: none; }
+.succes { background: #E8F5E9; color: #1B5E20; }
+.erreur { background: #FFEBEE; color: #C62828; }
+</style>
+</head>
+<body>
+<div class="carte">
+<h2>Assigner une tache</h2>
+<label>Membre a assigner :</label>
+<select id="membreSelect">
+<option value="">Chargement des membres...</option>
+</select>
+<button onclick="assignerTache()">Assigner</button>
+<div id="message" class="message"></div>
+</div>
+<script>
+const token = localStorage.getItem('token');
+const API = 'http://localhost:3000/api';
+if (!token) window.location.href = 'index.html';
+const params = new URLSearchParams(window.location.search);
+const tacheId = params.get('tacheId');
+const projetId = params.get('projetId');
+// Charger les membres via Axios
+axios.get(API + '/projects/' + projetId + '/members', {
+headers: { Authorization: 'Bearer ' + token }
+})
+.then(function(reponse) {
+const select = document.getElementById('membreSelect');
+select.innerHTML = '<option value="">-- Choisir un membre --</option>';
+reponse.data.forEach(function(membre) {
+select.innerHTML += '<option value="' + membre._id + '">' + membre.prenom + ' ' + membre.nom + '</option>';
+});
+})
+.catch(function() {
+document.getElementById('membreSelect').innerHTML =
+'<option value="">Erreur de chargement</option>';
+});
+function assignerTache() {
+const assignedTo = document.getElementById('membreSelect').value;
+if (!assignedTo) { afficherMessage('Choisir un membre', 'erreur'); return; }
+axios.patch(API + '/tasks/' + tacheId + '/assign',
+{ assignedTo },
+{ headers: { Authorization: 'Bearer ' + token } }
+)
+.then(function() {
+afficherMessage('Tache assignee avec succes !', 'succes');
+setTimeout(function() { window.location.href = 'dashboard.html'; }, 1500);
+})
+.catch(function() { afficherMessage('Erreur assignation', 'erreur'); });
+}
+function afficherMessage(texte, type) {
+const div = document.getElementById('message');
+div.textContent = texte;
+div.className = 'message ' + type;
+div.style.display = 'block';
+}
+</script>
+</body>
+</html>
