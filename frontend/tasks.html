@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Taches - TaskFlow</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #F0F2F5;
+    }
+
+    .nav {
+      background: #1E3A5F;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .contenu {
+      padding: 32px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .titre {
+      font-size: 22px;
+      color: #1E3A5F;
+      margin-bottom: 20px;
+    }
+
+    .filtres {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .filtres input,
+    .filtres select {
+      padding: 10px 14px;
+      border: 1.5px solid #DDD;
+      border-radius: 8px;
+      font-size: 14px;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .btn-filtrer {
+      padding: 10px 20px;
+      background: #1E3A5F;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-filtrer:hover {
+      background: #006064;
+    }
+
+    .tache-item {
+      background: white;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .haute {
+      background: #FFEBEE;
+      color: #C62828;
+    }
+
+    .moyenne {
+      background: #FFF3E0;
+      color: #E65100;
+    }
+
+    .basse {
+      background: #E8F5E9;
+      color: #1B5E20;
+    }
+
+    .pagination {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+      justify-content: center;
+    }
+
+    .btn-page {
+      padding: 8px 14px;
+      border: 1.5px solid #DDD;
+      border-radius: 6px;
+      cursor: pointer;
+      background: white;
+      font-size: 13px;
+    }
+
+    .btn-page.actif {
+      background: #1E3A5F;
+      color: white;
+      border-color: #1E3A5F;
+    }
+
+    .info-total {
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    button.nav-btn {
+      background: #EF5350;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="nav">
+    <h1>TaskFlow - Taches</h1>
+    <button class="nav-btn" onclick="window.location.href='dashboard.html'">
+      Tableau de bord
+    </button>
+  </div>
+  <div class="contenu">
+    <h2 class="titre">Liste des taches</h2>
+    <!-- FILTRES -->
+    <div class="filtres">
+      <input type="text" id="recherche" placeholder="Rechercher par mot-cle..." />
+      <select id="filtreStatut">
+        <option value="">Tous les statuts</option>
+        <option value="a faire">A faire</option>
+        <option value="en cours">En cours</option>
+        <option value="termine">Termine</option>
+      </select>
+      <select id="filtrePriorite">
+        <option value="">Toutes les priorites</option>
+        <option value="haute">Haute</option>
+        <option value="moyenne">Moyenne</option>
+        <option value="basse">Basse</option>
+      </select>
+      <button class="btn-filtrer" onclick="chargerTaches(1)">Filtrer</button>
+    </div>
+    <p class="info-total" id="infoTotal"></p>
+    <div id="listeTaches">Chargement...</div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+  <script>
+    const token = localStorage.getItem('token');
+    const API = 'http://localhost:3000/api';
+    if (!token) window.location.href = 'index.html';
+    const params = new URLSearchParams(window.location.search);
+    const projetId = params.get('projetId');
+    function chargerTaches(page) {
+      const recherche = document.getElementById('recherche').value;
+      const statut = document.getElementById('filtreStatut').value;
+      const priorite = document.getElementById('filtrePriorite').value;
+      let url = API + '/projects/' + projetId + '/tasks?page=' + page + '&limit=5';
+      if (recherche) url += '&recherche=' + encodeURIComponent(recherche);
+      if (statut) url += '&statut=' + encodeURIComponent(statut);
+      if (priorite) url += '&priorite=' + encodeURIComponent(priorite);
+      axios.get(url, { headers: { Authorization: 'Bearer ' + token } })
+        .then(function (reponse) {
+          const data = reponse.data;
+          document.getElementById('infoTotal').textContent =
+            data.total + ' tache(s) trouvee(s)';
+          const liste = document.getElementById('listeTaches');
+          if (data.data.length === 0) {
+            liste.innerHTML = '<p style="color:#666">Aucune tache trouvee.</p>';
+          } else {
+            liste.innerHTML = data.data.map(function (tache) {
+              return '<div class="tache-item">' +
+                '<div><strong>' + tache.titre + '</strong>' +
+                '<span style="color:#666;font-size:12px;margin-left:8px">' +
+                tache.statut + '</span></div>' +
+                '<span class="badge ' + tache.priorite + '">' +
+                tache.priorite + '</span></div>';
+            }).join('');
+          }
+          afficherPagination(data.page, data.totalPages);
+        })
+        .catch(function () {
+          document.getElementById('listeTaches').innerHTML =
+            '<p style="color:red">Erreur de chargement.</p>';
+        });
+    }
+    function afficherPagination(pageActuelle, totalPages) {
+      const div = document.getElementById('pagination');
+      div.innerHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-page' + (i === pageActuelle ? ' actif' : '');
+        btn.textContent = i;
+        btn.onclick = function () { chargerTaches(i); };
+        div.appendChild(btn);
+      }
+    }
+    document.getElementById('recherche').addEventListener('input', function () {
+      chargerTaches(1);
+    });
+    chargerTaches(1);
+  </script>
+</body>
+
+</html>
