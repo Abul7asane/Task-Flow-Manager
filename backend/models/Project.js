@@ -28,7 +28,13 @@ const projectSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
-  }
+  },
+// NOUVEAU : liste des membres du projet
+// Tableau d'ObjectId qui referencent la collection users
+membres: [{
+type: mongoose.Schema.Types.ObjectId,
+ref: 'User'
+}],
 }, {
   timestamps: true // ajoute createdAt et updatedAt automatiquement
 });
