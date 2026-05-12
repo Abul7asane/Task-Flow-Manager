@@ -95,5 +95,69 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 });
+// POST /api/projects/:id/members
+ // Ajouter un membre au projet
+ // Seul le createur peut ajouter des membres
+ router.post('/:id/members', async (req, res) => {
+ try {
+ const { userId } = req.body;
+  // Verifier que l'utilisateur courant est le createur
+ const projet = await Project.findOne({
+ _id: req.params.id,
+ createur: req.userId
+ });
+ if (!projet) {
+ return res.status(403).json({
+ message: 'Seul le createur peut ajouter des membres'
+ });
+ }
+  // Ajouter le membre (eviter les doublons)
+ if (!projet.membres.includes(userId)) {
+ projet.membres.push(userId);
+ await projet.save();
+ }
+  res.json({ message: 'Membre ajoute avec succes', projet });
+ } catch (error) {
+ res.status(500).json({ message: 'Erreur serveur', error: error.message });
+ }
+ });
+  // DELETE /api/projects/:id/members/:userId
+ // Retirer un membre du projet
+ router.delete('/:id/members/:userId', async (req, res) => {
+ try {
+ const projet = await Project.findOne({
+ _id: req.params.id,
+ createur: req.userId
+ });
+ if (!projet) {
+ return res.status(403).json({
+ message: 'Seul le createur peut retirer des membres'
+ });
+ }
+ 
+ // Retirer le membre
+ projet.membres = projet.membres.filter(
+ m => m.toString() !== req.params.userId
+ );
+ await projet.save();
+  res.json({ message: 'Membre retire avec succes', projet });
+ } catch (error) {
+ res.status(500).json({ message: 'Erreur serveur', error: error.message });
+ }
+ });
+  // GET /api/projects/:id/members
+ // Lister les membres du projet avec populate
+ router.get('/:id/members', async (req, res) => {
+ try {
+ const projet = await Project.findById(req.params.id)
+ .populate('membres', 'nom prenom email');
+  if (!projet) {
+ return res.status(404).json({ message: 'Projet non trouve' });
+ }
+  res.json(projet.membres);
+ } catch (error) {
+ res.status(500).json({ message: 'Erreur serveur', error: error.message });
+ }
+  });
 
 module.exports = router;
