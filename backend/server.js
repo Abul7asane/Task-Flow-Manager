@@ -10,6 +10,8 @@ const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 
+const notificationRoutes = require('./routes/notifications');
+
 // Middleware pour lire le JSON
 app.use(express.json());
 app.use(cors());
@@ -25,6 +27,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/projects', taskRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Démarrage du serveur
 const PORT = process.env.PORT || 3000;
