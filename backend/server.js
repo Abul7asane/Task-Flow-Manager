@@ -29,6 +29,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/projects', taskRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/activities', activityRoutes);
 
 // Démarrage du serveur
 const PORT = process.env.PORT || 3000;
