@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
 const taskRoutes = require('./routes/tasks');
 const dashboardRoutes = require('./routes/dashboard');
+const activityRoutes = require('./routes/activities');
 
 const app = express();
 
