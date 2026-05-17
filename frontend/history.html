@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Historique - TaskFlow</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #F0F2F5;
+    }
+
+    .nav {
+      background: #1E3A5F;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .contenu {
+      padding: 32px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .titre {
+      font-size: 22px;
+      color: #1E3A5F;
+      margin-bottom: 20px;
+    }
+
+    .activite-item {
+      background: white;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .action {
+      color: #1E3A5F;
+      font-weight: bold;
+    }
+
+    .date {
+      color: #666;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    button.nav-btn {
+      background: #EF5350;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="nav">
+    <h1>TaskFlow - Historique</h1>
+    <button class="nav-btn" onclick="window.location.href='dashboard.html'">
+      Tableau de bord
+    </button>
+  </div>
+  <div class="contenu">
+    <h2 class="titre">Historique de la tache</h2>
+    <div id="listeActivites">Chargement...</div>
+  </div>
+  <script>
+    const token = localStorage.getItem('token');
+    const API = 'http://localhost:3000/api';
+    if (!token) window.location.href = 'index.html';
+    const params = new URLSearchParams(window.location.search);
+    const tacheId = params.get('tacheId');
+    axios.get(API + '/activities/task/' + tacheId, {
+      headers: { Authorization: 'Bearer ' + token }
+    })
+      .then(function (reponse) {
+        const liste = document.getElementById('listeActivites');
+        if (reponse.data.length === 0) {
+          liste.innerHTML = '<p style="color:#666">Aucune action enregistree.</p>';
+          return;
+        }
+        liste.innerHTML = reponse.data.map(function (a) {
+          const date = new Date(a.createdAt).toLocaleString('fr-FR');
+          return '<div class="activite-item">' +
+            '<span class="action">' + a.action.toUpperCase() + '</span>' +
+            ' par <strong>' + a.utilisateur.prenom + ' ' + a.utilisateur.nom + '</strong>' +
+            (a.details ? '<p style="margin-top:6px">' + a.details + '</p>' : '') +
+            '<p class="date">' + date + '</p>' +
+            '</div>';
+        }).join('');
+      })
+      .catch(function () {
+        document.getElementById('listeActivites').innerHTML =
+          '<p style="color:red">Erreur de chargement.</p>';
+      });
+  </script>
+</body>
+
+</html>

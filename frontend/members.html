@@ -1,0 +1,105 @@
+<!-- Gestion des membres - Fonctionnalite 8 - Ait -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Membres - TaskFlow</title>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #F0F2F5; }
+.nav { background: #1E3A5F; color: white; padding: 16px 32px;
+display: flex; justify-content: space-between; align-items: center; }
+.contenu { padding: 32px; max-width: 700px; margin: 0 auto; }
+.titre { font-size: 22px; color: #1E3A5F; margin-bottom: 20px; }
+.ajout-form {
+background: white; padding: 20px; border-radius: 10px;
+margin-bottom: 20px; display: flex; gap: 10px;
+ box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+ }
+ .ajout-form input { flex: 1; padding: 10px; border: 1.5px solid #DDD;
+ border-radius: 8px; font-size: 14px; }
+ .ajout-form button { padding: 10px 20px; background: #1E3A5F;
+ color: white; border: none; border-radius: 8px;
+ cursor: pointer; }
+ .membre-item {
+ background: white; padding: 14px 20px; border-radius: 8px;
+ margin-bottom: 10px; display: flex;
+ justify-content: space-between; align-items: center;
+ box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+ }
+ .btn-retirer { background: #EF5350; color: white; border: none;
+ padding: 6px 12px; border-radius: 6px; cursor: pointer;
+ font-size: 12px; }
+ </style>
+ </head>
+ <body>
+ <div class="nav">
+ <h1>TaskFlow - Membres</h1>
+ <button onclick="window.location.href='dashboard.html'"
+ style="background:#EF5350;color:white;border:none;
+ padding:8px 16px;border-radius:6px;cursor:pointer">
+ Tableau de bord
+ </button>
+ </div>
+ <div class="contenu">
+ <h2 class="titre">Membres du projet</h2>
+  <div class="ajout-form">
+ <input type="text" id="nouvelUserId" placeholder="ID de l'utilisateur a ajouter" />
+ <button onclick="ajouterMembre()">Ajouter</button>
+ </div>
+  <div id="listeMembres">Chargement...</div>
+ </div>
+  <script>
+ const token = localStorage.getItem('token');
+ const API = 'http://localhost:3000/api';
+ if (!token) window.location.href = 'index.html';
+  const params = new URLSearchParams(window.location.search);
+ const projetId = params.get('projetId');
+  function chargerMembres() {
+ axios.get(API + '/projects/' + projetId + '/members', {
+ headers: { Authorization: 'Bearer ' + token }
+ })
+ .then(function(reponse) {
+ const liste = document.getElementById('listeMembres');
+ if (reponse.data.length === 0) {
+ liste.innerHTML = '<p style="color:#666">Aucun membre.</p>';
+ return;
+
+ }
+ liste.innerHTML = reponse.data.map(function(m) {
+ return '<div class="membre-item">' +
+ '<div><strong>' + m.prenom + ' ' + m.nom + '</strong>' +
+ '<p style="color:#666;font-size:12px">' + m.email + '</p></div>' +
+ '<button class="btn-retirer" onclick="retirerMembre(\'' + m._id + '\')">' +
+ 'Retirer' +
+ '</button></div>';
+ }).join('');
+ });
+ }
+  function ajouterMembre() {
+ const userId = document.getElementById('nouvelUserId').value.trim();
+ if (!userId) return alert('Veuillez saisir un ID');
+  axios.post(API + '/projects/' + projetId + '/members',
+ { userId },
+ { headers: { Authorization: 'Bearer ' + token } }
+ )
+ .then(function() {
+ document.getElementById('nouvelUserId').value = '';
+ chargerMembres();
+ })
+ .catch(function() {
+ alert('Erreur lors de l\'ajout');
+ });
+ }
+  function retirerMembre(userId) {
+ if (!confirm('Retirer ce membre ?')) return;
+ axios.delete(API + '/projects/' + projetId + '/members/' + userId, {
+ headers: { Authorization: 'Bearer ' + token }
+ })
+ .then(function() { chargerMembres(); });
+ }
+  chargerMembres();
+ </script>
+ </body>
+ </html>
