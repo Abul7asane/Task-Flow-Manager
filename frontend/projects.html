@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Projets - TaskFlow</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #F0F2F5; }
+    .nav { background: #1E3A5F; color: white; padding: 16px 32px;
+           display: flex; justify-content: space-between; align-items: center; }
+    .contenu { padding: 32px; max-width: 900px; margin: 0 auto; }
+    .titre { font-size: 22px; color: #1E3A5F; margin-bottom: 20px; }
+    .formulaire {
+      background: white; padding: 24px; border-radius: 10px;
+      margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .champ { margin-bottom: 14px; }
+    .champ label { display: block; font-size: 13px; font-weight: 600;
+                   color: #333; margin-bottom: 6px; }
+    .champ input, .champ textarea, .champ select {
+      width: 100%; padding: 10px 14px; border: 1.5px solid #DDD;
+      border-radius: 8px; font-size: 14px;
+    }
+    .btn { padding: 10px 20px; background: #1E3A5F; color: white;
+           border: none; border-radius: 8px; cursor: pointer;
+           font-size: 14px; font-weight: 600; }
+    .btn:hover { background: #006064; }
+    .btn-rouge { background: #EF5350; }
+    .projet-item {
+      background: white; padding: 16px 20px; border-radius: 8px;
+      margin-bottom: 10px; display: flex;
+      justify-content: space-between; align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .badge-statut { padding: 4px 10px; border-radius: 20px;
+                    font-size: 11px; font-weight: bold; }
+    .actif    { background: #E8F5E9; color: #1B5E20; }
+    .en-pause { background: #FFF3E0; color: #E65100; }
+    .archive  { background: #FFEBEE; color: #C62828; }
+    .message  { padding: 10px; border-radius: 6px; margin-top: 10px;
+                font-size: 14px; display: none; }
+    .succes { background: #E8F5E9; color: #1B5E20; }
+    .erreur { background: #FFEBEE; color: #C62828; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <h1>TaskFlow - Projets</h1>
+    <button class="btn btn-rouge"
+            onclick="window.location.href='dashboard.html'">
+      Tableau de bord
+    </button>
+  </div>
+
+  <div class="contenu">
+    <h2 class="titre">Mes projets</h2>
+
+    <!-- FORMULAIRE CREATION PROJET -->
+    <div class="formulaire">
+      <h3 style="color:#1E3A5F; margin-bottom:16px">Nouveau projet</h3>
+      <div class="champ">
+        <label>Titre *</label>
+        <input type="text" id="titreProjet" placeholder="Titre du projet" />
+      </div>
+      <div class="champ">
+        <label>Description *</label>
+        <textarea id="descriptionProjet" rows="3"
+                  placeholder="Description..."></textarea>
+      </div>
+      <div class="champ">
+        <label>Date limite</label>
+        <input type="date" id="dateLimiteProjet" />
+      </div>
+      <div class="champ">
+        <label>Statut</label>
+        <select id="statutProjet">
+          <option value="actif">Actif</option>
+          <option value="en pause">En pause</option>
+          <option value="archive">Archive</option>
+        </select>
+      </div>
+      <button class="btn" onclick="creerProjet()">Créer le projet</button>
+      <div id="msgFormulaire" class="message"></div>
+    </div>
+
+    <!-- LISTE PROJETS -->
+    <div id="listeProjets">Chargement...</div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    const API   = 'http://localhost:3000/api';
+    if (!token) window.location.href = 'index.html';
+
+    // Charger les projets
+    function chargerProjets() {
+      axios.get(API + '/projects', {
+        headers: { Authorization: 'Bearer ' + token }
+      })
+      .then(function(reponse) {
+        const liste = document.getElementById('listeProjets');
+        if (reponse.data.length === 0) {
+          liste.innerHTML = '<p style="color:#666">Aucun projet.</p>';
+          return;
+        }
+        liste.innerHTML = reponse.data.map(function(p) {
+          const statut = p.statut.replace(' ', '-');
+          return '<div class="projet-item">' +
+            '<div>' +
+              '<strong>' + p.titre + '</strong>' +
+              '<p style="color:#666;font-size:12px;margin-top:4px">' +
+                p.description + '</p>' +
+            '</div>' +
+            '<div style="display:flex;gap:8px;align-items:center">' +
+              '<span class="badge-statut ' + statut + '">' + p.statut + '</span>' +
+              '<button class="btn" onclick="voirTaches(\'' + p._id + '\')">' +
+                'Taches' +
+              '</button>' +
+              '<button class="btn btn-rouge" onclick="supprimerProjet(\'' + p._id + '\')">' +
+                'Supprimer' +
+              '</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      })
+      .catch(function() {
+        document.getElementById('listeProjets').innerHTML =
+          '<p style="color:red">Erreur de chargement.</p>';
+      });
+    }
+
+    // Creer un projet
+    function creerProjet() {
+      const titre       = document.getElementById('titreProjet').value.trim();
+      const description = document.getElementById('descriptionProjet').value.trim();
+      const dateLimite  = document.getElementById('dateLimiteProjet').value;
+      const statut      = document.getElementById('statutProjet').value;
+
+      if (!titre || !description) {
+        afficherMsg('Titre et description obligatoires', 'erreur');
+        return;
+      }
+
+      axios.post(API + '/projects',
+        { titre, description, dateLimite, statut },
+        { headers: { Authorization: 'Bearer ' + token } }
+      )
+      .then(function() {
+        afficherMsg('Projet cree avec succes !', 'succes');
+        document.getElementById('titreProjet').value       = '';
+        document.getElementById('descriptionProjet').value = '';
+        document.getElementById('dateLimiteProjet').value  = '';
+        chargerProjets();
+      })
+      .catch(function() {
+        afficherMsg('Erreur lors de la creation', 'erreur');
+      });
+    }
+
+    // Supprimer un projet
+    function supprimerProjet(id) {
+      if (!confirm('Supprimer ce projet ?')) return;
+      axios.delete(API + '/projects/' + id, {
+        headers: { Authorization: 'Bearer ' + token }
+      })
+      .then(function() { chargerProjets(); });
+    }
+
+    // Voir les taches d'un projet
+    function voirTaches(projetId) {
+      window.location.href = 'tasks.html?projetId=' + projetId;
+    }
+
+    function afficherMsg(texte, type) {
+      const div = document.getElementById('msgFormulaire');
+      div.textContent   = texte;
+      div.className     = 'message ' + type;
+      div.style.display = 'block';
+    }
+
+    chargerProjets();
+  </script>
+</body>
+</html>
