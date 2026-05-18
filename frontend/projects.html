@@ -42,6 +42,13 @@
                 font-size: 14px; display: none; }
     .succes { background: #E8F5E9; color: #1B5E20; }
     .erreur { background: #FFEBEE; color: #C62828; }
+    .pagination { display: flex; justify-content: center;
+                  margin-top: 16px; gap: 8px; }
+    .btn-page { padding: 8px 14px; border: 1.5px solid #DDD;
+                border-radius: 6px; cursor: pointer;
+                background: white; font-size: 13px; }
+    .btn-page.actif-page { background: #1E3A5F; color: white;
+                           border-color: #1E3A5F; }
   </style>
 </head>
 <body>
@@ -80,12 +87,14 @@
           <option value="archive">Archive</option>
         </select>
       </div>
-      <button class="btn" onclick="creerProjet()">Créer le projet</button>
+      <button class="btn" onclick="creerProjet()">Creer le projet</button>
       <div id="msgFormulaire" class="message"></div>
     </div>
 
     <!-- LISTE PROJETS -->
+    <p id="infoTotal" style="color:#666; font-size:13px; margin-bottom:12px;"></p>
     <div id="listeProjets">Chargement...</div>
+    <div class="pagination" id="pagination"></div>
   </div>
 
   <script>
@@ -93,36 +102,58 @@
     const API   = 'http://localhost:3000/api';
     if (!token) window.location.href = 'index.html';
 
-    // Charger les projets
-    function chargerProjets() {
-      axios.get(API + '/projects', {
+    let pageActuelle = 1;
+
+    function chargerProjets(page) {
+      pageActuelle = page || 1;
+
+      axios.get(API + '/projects?page=' + pageActuelle + '&limit=5', {
         headers: { Authorization: 'Bearer ' + token }
       })
       .then(function(reponse) {
+        const data = reponse.data;
         const liste = document.getElementById('listeProjets');
-        if (reponse.data.length === 0) {
+
+        // Info total
+        if (data.total !== undefined) {
+          document.getElementById('infoTotal').textContent =
+            data.total + ' projet(s) trouve(s)';
+        }
+
+        const projets = data.data || data;
+
+        if (projets.length === 0) {
           liste.innerHTML = '<p style="color:#666">Aucun projet.</p>';
           return;
         }
-        liste.innerHTML = reponse.data.map(function(p) {
+
+        liste.innerHTML = projets.map(function(p) {
           const statut = p.statut.replace(' ', '-');
           return '<div class="projet-item">' +
-            '<div>' +
-              '<strong>' + p.titre + '</strong>' +
-              '<p style="color:#666;font-size:12px;margin-top:4px">' +
-                p.description + '</p>' +
-            '</div>' +
+            '<div><strong>' + p.titre + '</strong>' +
+            '<p style="color:#666;font-size:12px;margin-top:4px">' +
+              p.description + '</p></div>' +
             '<div style="display:flex;gap:8px;align-items:center">' +
               '<span class="badge-statut ' + statut + '">' + p.statut + '</span>' +
               '<button class="btn" onclick="voirTaches(\'' + p._id + '\')">' +
-                'Taches' +
-              '</button>' +
+                'Taches</button>' +
               '<button class="btn btn-rouge" onclick="supprimerProjet(\'' + p._id + '\')">' +
-                'Supprimer' +
-              '</button>' +
-            '</div>' +
-          '</div>';
+                'Supprimer</button>' +
+            '</div></div>';
         }).join('');
+
+        // Pagination
+        if (data.totalPages) {
+          const pag = document.getElementById('pagination');
+          pag.innerHTML = '';
+          for (let i = 1; i <= data.totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'btn-page' + (i === pageActuelle ? ' actif-page' : '');
+            btn.textContent = i;
+            btn.onclick = function() { chargerProjets(i); };
+            pag.appendChild(btn);
+          }
+        }
       })
       .catch(function() {
         document.getElementById('listeProjets').innerHTML =
@@ -130,7 +161,6 @@
       });
     }
 
-    // Creer un projet
     function creerProjet() {
       const titre       = document.getElementById('titreProjet').value.trim();
       const description = document.getElementById('descriptionProjet').value.trim();
@@ -151,23 +181,21 @@
         document.getElementById('titreProjet').value       = '';
         document.getElementById('descriptionProjet').value = '';
         document.getElementById('dateLimiteProjet').value  = '';
-        chargerProjets();
+        chargerProjets(1);
       })
       .catch(function() {
         afficherMsg('Erreur lors de la creation', 'erreur');
       });
     }
 
-    // Supprimer un projet
     function supprimerProjet(id) {
       if (!confirm('Supprimer ce projet ?')) return;
       axios.delete(API + '/projects/' + id, {
         headers: { Authorization: 'Bearer ' + token }
       })
-      .then(function() { chargerProjets(); });
+      .then(function() { chargerProjets(pageActuelle); });
     }
 
-    // Voir les taches d'un projet
     function voirTaches(projetId) {
       window.location.href = 'tasks.html?projetId=' + projetId;
     }
@@ -179,7 +207,7 @@
       div.style.display = 'block';
     }
 
-    chargerProjets();
+    chargerProjets(1);
   </script>
 </body>
 </html>
