@@ -22,11 +22,10 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connecté à MongoDB'))
   .catch(err => console.error('Erreur MongoDB:', err));
 
-// Routes
+// Routes 
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/projects', taskRoutes);
+app.use('/api', taskRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/activities', activityRoutes);
